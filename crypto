@@ -5,11 +5,13 @@ import json
 import requests
 import os
 
-# font in regolith 1.5.1
+# font and color in Regolith 1.5.1
 FONT = "JetBrains Mono Medium 13"
+COLOR = '#E6E1CF'
 
 PRICE_CHANGE_PERIOD = '4h' # Available: '1h', '24h', '7d'
 PRICE_CHANGE_URGENT_PERCENT = 10
+PRICE_CHANGE_TO_COLOR = 5
 
 API_URL = 'https://api.binance.com/api/v3/klines?symbol={}&interval={}&limit=1' # Binance API
 coin = os.environ.get('BLOCK_INSTANCE', "BTCUSDT")
@@ -17,25 +19,31 @@ r = requests.get(API_URL.format(coin, PRICE_CHANGE_PERIOD))
 data = json.loads(r.text)[0]
 
 price = float(data[4]) # close
-open = float(data[1])
+price_open = float(data[1])
 
 if price > 100: precision = 0
 elif price > 0.1: precision = 2
 else: precision = 6
 
-percentChange = (price - open)/open*100
+percent_change = (price - price_open) / price_open * 100
 
-percentChangeFormat = '<span color="{}" font_desc="{}"> {}{:.2f}%</span>'
-valueFormat = '<span font_desc="{}">' + ' {:,.' + str(precision) + 'f}</span>'
+percent_change_format = '<span color="{}" font_desc="{}"> {}{:.2f}%</span>'
+value_format = '<span font_desc="{}">' + ' {:,.' + str(precision) + 'f}</span>'
 
 # set color based on percent change
-if percentChange > 0: percentChangeInfo = percentChangeFormat.format('#3BB92D', FONT, '▲', percentChange)
-elif percentChange == 0: percentChangeInfo = percentChangeFormat.format('#CCCCCC', FONT, '', percentChange)
-else: percentChangeInfo = percentChangeFormat.format('#F7555E', FONT, '▼', percentChange)
+color = COLOR
+if percent_change > 0:
+    if abs(percent_change) > PRICE_CHANGE_TO_COLOR: color = '#3BB92D'
+    arrow = '▲'
+else:
+    if abs(percent_change) > PRICE_CHANGE_TO_COLOR: color = '#F7555E'
+    arrow = '▼'
 
-valueInfo = valueFormat.format(FONT, price)
-print(valueInfo + percentChangeInfo) # Full Text
-print(valueInfo) # Short Text
+percent_change_info = percent_change_format.format(color, FONT, arrow, percent_change)
+value_info = value_format.format(FONT, price)
 
-if percentChange > PRICE_CHANGE_URGENT_PERCENT:
+print(value_info + percent_change_info) # Full Text
+print(value_info) # Short Text
+
+if percent_change > PRICE_CHANGE_URGENT_PERCENT:
     exit(33)
