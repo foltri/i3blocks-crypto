@@ -19,6 +19,11 @@ coin = os.environ.get('BLOCK_INSTANCE', "BTCUSDT")
 r = requests.get(API_URL.format(coin, PRICE_CHANGE_PERIOD))
 data = json.loads(r.text)[0]
 
+# open binance on click
+if os.environ.get('BLOCK_BUTTON') == "1":
+    web = "https://www.binance.com/en/trade/{}".format(coin)
+    os.system("xdg-open " + web)
+
 price = float(data[4])  # close
 price_open = float(data[1])
 
